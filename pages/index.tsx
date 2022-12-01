@@ -1,8 +1,17 @@
 import Head from "next/head"
 import { Spotify } from "components/icons"
-import { motion } from "framer-motion"
+import { LayoutGroup, motion } from "framer-motion"
+import { useState } from "react"
+import { subTabs, Tab, tabs } from "data"
 
 export default function Home() {
+	const [activeTab, setActiveTab] = useState<{
+		tab: Tab
+		index: number
+	} | null>(null)
+	const [activeSubTab, setActiveSubTab] = useState<string | null>(null)
+	const [lastSubActiveTab, setLastSubActiveTab] = useState<string | null>(null)
+
 	return (
 		<>
 			<Head>
@@ -11,17 +20,146 @@ export default function Home() {
 				<link rel="icon" href="/favicon.ico" />
 			</Head>
 
-			<main className="p-20 flex gap-10 flex-col">
+			<main className="p-6 sm:p-20 flex gap-10 flex-col bg-[#121212] min-h-screen overflow-hidden">
 				<header className="flex flex-col gap-4">
 					<Spotify className="w-40" />
 				</header>
-				<motion.div
-					initial={{ x: 100, opacity: 0 }}
-					animate={{ x: 0, opacity: 1 }}
-					className="px-3 py-1 rounded-full bg-red-500 font-medium max-w-max text-white"
-				>
-					Playlist
-				</motion.div>
+
+				<section className="flex gap-4 items-center overflow-auto hide-scrollbar">
+					<LayoutGroup>
+						{/* CROSS ICON */}
+						{activeTab && (
+							<motion.div
+								layout
+								initial={{ opacity: 0, scale: 0.8 }}
+								animate={{ opacity: 1, scale: 1 }}
+								transition={{ duration: 0.2, delay: 0.2 }}
+								className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-300 text-white cursor-pointer shrink-0"
+								onClick={() => {
+									setActiveTab(null)
+									setActiveSubTab(null)
+								}}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth={1.5}
+									stroke="currentColor"
+									className="w-5 h-5"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</motion.div>
+						)}
+
+						{/* TABS */}
+						<div className="flex gap-4 z-10">
+							{tabs
+								.filter((tab) => {
+									if (activeTab === null) return true
+									return tab.name === activeTab.tab
+								})
+								.map((tab, i) => {
+									return (
+										<motion.div
+											key={tab.name}
+											layout
+											onClick={() => {
+												if (activeTab?.tab === tab.name) {
+													setActiveTab(null)
+													setActiveSubTab(null)
+													setLastSubActiveTab(null)
+												} else
+													setActiveTab({
+														tab: tab.name,
+														index: i,
+													})
+											}}
+											initial={{ opacity: 0 }}
+											animate={{
+												opacity: 1,
+												transition: { delay: activeTab?.index === i ? 0 : 0.3 },
+											}}
+											className={`shrink-0 px-5 cursor-pointer select-none py-1 rounded-full border border-gray-300 max-w-max text-white ${
+												activeTab?.tab === tab.name
+													? "bg-green-600 border-green-400"
+													: ""
+											}`}
+										>
+											{tab.name}
+										</motion.div>
+									)
+								})}
+						</div>
+
+						{/* SUB TABS */}
+						{activeTab && (
+							<motion.div
+								className="flex gap-2 shrink-0"
+								initial={{ opacity: 0, x: 100 }}
+								animate={{ opacity: 1, x: 0 }}
+								exit={{ opacity: 0, x: 0 }}
+								transition={{ duration: 0.5 }}
+							>
+								{subTabs[activeTab.tab]
+									.filter((tab) => {
+										if (activeSubTab === null) return true
+										return tab.name === activeSubTab
+									})
+									.map((tab, i) => {
+										return (
+											<motion.div
+												key={tab.name}
+												layout
+												onClick={() => {
+													if (activeSubTab === tab.name) setActiveSubTab(null)
+													else {
+														setLastSubActiveTab(tab.name)
+														setActiveSubTab(tab.name)
+													}
+												}}
+												initial={{
+													opacity: 0,
+													paddingLeft: 20,
+												}}
+												transition={{
+													duration: 0.3,
+													delay:
+														lastSubActiveTab && lastSubActiveTab !== tab.name
+															? 0.3
+															: 0,
+												}}
+												animate={
+													activeSubTab === tab.name
+														? {
+																opacity: 1,
+																x: -50,
+																paddingLeft: 50,
+														  }
+														: {
+																opacity: 1,
+																paddingLeft: 20,
+														  }
+												}
+												className={`shrink-0 flex items-center px-5 cursor-pointer select-none py-1 rounded-full border border-gray-300 max-w-max text-white transform ${
+													activeSubTab === tab.name
+														? "bg-green-800 border-green-400"
+														: ""
+												}`}
+											>
+												{tab.name}
+											</motion.div>
+										)
+									})}
+							</motion.div>
+						)}
+					</LayoutGroup>
+				</section>
 			</main>
 		</>
 	)
